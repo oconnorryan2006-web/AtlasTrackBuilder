@@ -1,0 +1,1 @@
+{"attribution": "\u00a9 OpenStreetMap contributors", "licence": "ODbL 1.0", "licence_url": "https://www.openstreetmap.org/copyright", "query": "[out:json][timeout:12];(way[highway](55.0508,-6.9293,55.0520,-6.9269);node[traffic_sign](55.0508,-6.9293,55.0520,-6.9269);way[building](55.0508,-6.9293,55.0520,-6.9269););out geom;", "retrieved_utc": "2026-10-10T12:18:14.981867+00:00"}

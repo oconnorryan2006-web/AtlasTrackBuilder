@@ -1,0 +1,20 @@
+{
+  "roundabout_centre_estimate_lat_lon": [
+    55.0514846,
+    -6.92766959090909
+  ],
+  "roundabout_way_ids": [
+    833848465,
+    1308278573,
+    1308278576,
+    1312992366
+  ],
+  "greystone_approach_way_ids": [
+    15495510,
+    1333753572,
+    1333753573
+  ],
+  "building_way_count": 10,
+  "mapped_traffic_sign_count": 0,
+  "limitation": "Counts describe small requested bbox; way geometries are complete and may extend outside bbox. Centre is mean of unique mapped ring vertices, not a surveyed centre."
+}

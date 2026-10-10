@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><title>ATLAS — World Studio</title><link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+:root{--bg:#e9eef0;--panel:#fff;--ink:#14252b;--text:#14252b;--text2:#647880;--text3:#83959a;--border:#d9e2e5;--accent:#167b70;--green:#1b8c7c;--red:#db534a;--mono:'DM Sans',sans-serif;--font:'DM Sans',sans-serif}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font-family:var(--font);background:var(--bg);overflow:hidden;font-size:13px}button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.42;cursor:not-allowed}
+.shell{height:100dvh;display:grid;grid-template-rows:68px minmax(0,1fr) 84px}.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 26px;background:#122a31;color:#fff;z-index:1100;box-shadow:0 3px 20px #0015}.brand{display:flex;gap:13px;align-items:center}.brand-mark{width:39px;height:39px;border-radius:12px;background:#bdf3d4;color:#113f3b;display:grid;place-items:center;font-family:'Space Grotesk';font-weight:800;font-size:25px}.brand-name{font:700 21px 'Space Grotesk'}.brand-sub{color:#9dbbb8;font-size:11px;letter-spacing:.09em}.top-actions{display:flex;gap:12px;align-items:center}.status-bar{display:flex;align-items:center;gap:9px;color:#c6dedb;font-size:12px}.status-dot,.live-dot{width:8px;height:8px;border-radius:50%;background:#64ddb2}.spinner{display:none;width:15px;height:15px;border:2px solid #ffffff40;border-top-color:#aaf0d5;border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.workarea{position:relative;min-height:0;overflow:hidden}.map-stage,#map{position:absolute;inset:0;width:100%;height:100%}.map-stage{background:#b9c8c9}.map-toolbar{position:absolute;top:20px;right:20px;z-index:700;display:flex;align-items:center;gap:14px;background:#fff;padding:7px;border-radius:14px;box-shadow:0 8px 35px #10282c35}.map-toolbar-label{display:none}.map-style-group{display:flex;gap:3px}.map-style{border:0;border-radius:9px;padding:10px 13px;background:transparent;color:#526b71;font-weight:700}.map-style.active{background:#153e42;color:white}
+.floating{position:absolute;z-index:710;top:20px;bottom:20px;overflow:auto;scrollbar-width:thin;scrollbar-color:#cbd6d7 transparent}.left-stack{left:20px;width:340px;display:flex;flex-direction:column;gap:12px;pointer-events:none}.right-stack{right:20px;width:332px;top:86px;display:flex;flex-direction:column;gap:12px;pointer-events:none}.left-stack>* ,.right-stack>*{pointer-events:auto}.panel{background:#ffffffed;border:1px solid #d7e2e3;border-radius:17px;padding:19px;box-shadow:0 10px 38px #0b28292b;backdrop-filter:blur(14px)}.panel-title{font:700 17px 'Space Grotesk';margin:0 0 6px}.panel-kicker{font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#238879;margin-bottom:7px}.panel-intro{color:#6b8084;font-size:12px;line-height:1.5;margin:0 0 14px}.section{margin:0}.section-label{font-weight:800;color:#1d5556;font-size:12px;letter-spacing:.025em;margin-bottom:12px}.field-label{font-size:11px;color:#546e73;margin:9px 0 7px}.search-wrap{display:flex;gap:8px}.search-input,.text-input{min-width:0;width:100%;background:#f2f6f6;color:#1b353a;border:1px solid #cddbdd;padding:12px;border-radius:10px;outline:none}.search-input:focus,.text-input:focus{border-color:#16897e;box-shadow:0 0 0 3px #1c988720}.search-btn{background:#184c4c;border:0;color:#fff;border-radius:10px;width:44px;font-size:23px}.results{max-height:155px;overflow:auto;margin-top:9px}.empty-msg{color:#819397;font-size:12px;padding:10px 0}.route-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:13px 0}.route-actions #pointModeBtn{grid-column:1/-1}.btn{padding:11px 13px;border-radius:10px;border:1px solid #cddadb;font-weight:800;font-size:12px;background:#f4f7f7;color:#21464c}.btn-primary{background:#167b70;border-color:#167b70;color:#fff}.btn-secondary{background:#f4f7f7}.btn:hover:not(:disabled),.map-style:hover{filter:brightness(.96)}.route-summary{padding:11px;border-radius:10px;background:#e8f5f0;color:#246d61;font-weight:700;font-size:12px}.builder-help{color:#6e8387;line-height:1.5;font-size:11px}.builder-check{display:flex;gap:9px;align-items:start;font-size:12px;line-height:1.45;color:#425e64;margin:12px 0}.builder-check input{accent-color:#167b70}.param-row{margin:15px 0}.param-head{display:flex;justify-content:space-between;align-items:center}.param-val{color:#167b70;font-weight:800}input[type=range]{width:100%;accent-color:#167b70}.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.stat-box{background:#f2f6f6;padding:11px;border-radius:10px}.stat-val{font-size:19px;font-weight:800}.stat-label{font-size:10px;color:#71858a}.map-warning{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:#fff1ed;color:#a73530;border:1px solid #edb7ad;border-radius:12px;padding:14px;z-index:800}.map-overlay{position:absolute;bottom:14px;left:380px;z-index:600;display:flex;gap:8px}.map-badge{padding:8px 12px;background:#ffffffeb;border-radius:8px;font-size:11px}.bottom-bar{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:12px 24px;background:#fff;border-top:1px solid #d9e2e5;z-index:1100}.bottom-title{font:700 16px 'Space Grotesk';margin-bottom:4px}.bottom-caption{color:#72878b;font-size:11px}.bottom-controls{display:flex;gap:10px;align-items:center}.bottom-controls .btn{min-width:140px}.bottom-controls #exportBtn{background:#123d3f;color:white;border-color:#123d3f}.progress-wrap{display:none;height:4px;background:#e1eeee;margin-top:9px}.progress-bar{background:#168d7a;height:100%}#toast{position:fixed;z-index:2500;bottom:102px;left:50%;transform:translateX(-50%);padding:13px 18px;border-radius:12px;background:#183b3e;color:white;display:none;box-shadow:0 8px 30px #0004}.waypoint-marker{background:#147f73;color:white;border:3px solid #fff;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;font-weight:800;box-shadow:0 3px 10px #0004}#pointModeBtn.active{background:#174943;color:white}.floating::-webkit-scrollbar{width:4px}.floating::-webkit-scrollbar-thumb{background:#bdcfd0;border-radius:4px}
+@media(max-width:1050px){.right-stack{width:275px}.left-stack{width:295px}.map-overlay{left:320px}}@media(max-width:750px){.shell{grid-template-rows:56px minmax(0,1fr) 76px}.topbar{padding:0 12px}.brand-sub{display:none}.floating{top:10px;bottom:auto;max-height:42%;width:calc(50% - 14px)}.left-stack{left:9px}.right-stack{right:9px;top:10px}.panel{padding:12px}.map-toolbar{top:auto;bottom:15px;right:10px}.bottom-bar{padding:7px 10px}.bottom-title,.bottom-caption{display:none}.bottom-controls{width:100%;gap:6px}.bottom-controls .btn{min-width:0;flex:1;padding:10px 5px;font-size:10px}.map-overlay{display:none}}
+
+/* V10: keep the footer INSIDE the grid shell so overflow:hidden cannot clip export. */
+.shell{grid-template-rows:64px minmax(0,1fr) auto!important;min-height:100dvh}
+.bottom-bar{min-height:86px;flex-wrap:wrap;position:relative;z-index:1200;gap:10px;padding:12px 20px;grid-row:3}
+.bottom-controls{margin-left:auto;flex:0 0 auto}
+.bottom-controls .btn{display:inline-flex!important;align-items:center;justify-content:center;white-space:nowrap;min-height:44px}
+#exportBtn{background:#125d51!important;color:#fff!important;border-color:#125d51!important;opacity:1}
+#exportBtn:disabled{background:#9aadb0!important;border-color:#9aadb0!important;opacity:1;color:#fff!important}
+#exportBtn{font-size:14px!important;min-width:200px!important;box-shadow:0 3px 12px #125d5130}
+#downloadSection{width:100%;padding:0!important}
+@media(max-width:900px){.bottom-title,.bottom-caption{display:none}.bottom-controls{width:100%;margin:0}.bottom-controls .btn{min-width:0;flex:1}.bottom-bar{padding:10px}}
+@media(max-width:500px){.bottom-controls .btn{font-size:10px;padding:9px 5px;white-space:normal}}
+</style></head><body><div class="shell"><header class="topbar"><div class="brand"><div class="brand-mark">A</div><div><div class="brand-name">ATLAS</div><div class="brand-sub">WORLD STUDIO / BUILD REAL PLACES</div></div></div><div class="top-actions"><div class="status-bar"><div class="status-dot" id="statusDot"></div><span id="statusText">Ready</span><div class="spinner" id="globalSpinner"></div></div></div></header><main class="workarea"><div class="map-stage"><div id="map" style="width:100%;height:100%;"></div><div class="map-warning" id="mapWarning" role="status" style="display:none">Map imagery could not load. Try another map style or check your connection.</div><div class="map-overlay">
+<div class="map-badge" id="segBadge" style="display:none">
+<strong id="segText">—</strong>
+</div>
+<div class="map-badge" id="coordBadge" style="display:none">
+<strong id="coordText">—</strong>
+</div>
+</div><div class="map-toolbar" style="display:none!important"><div class="map-toolbar-label"><span class="live-dot"></span> ATLAS VIEWPORT <span class="map-toolbar-hint">Select a basemap</span></div><div class="map-style-group"><button class="map-style" data-mapstyle="satellite" type="button">Satellite</button><button class="map-style active" data-mapstyle="streets" type="button">Streets</button><button class="map-style" data-mapstyle="topo" type="button">Terrain</button></div></div></div><div class="floating left-stack"><div class="panel"><div class="panel-kicker">01 / FIND</div><h2 class="panel-title">Search the real world</h2><div class="section">
+<div class="section-label">Find a location</div>
+<div class="search-wrap">
+<input autocomplete="off" class="search-input" id="searchInput" placeholder="Search a town, address, landmark or road…" type="text"/>
+<button class="search-btn" id="searchBtn" title="Search">⌕</button>
+</div>
+<div class="progress-wrap" id="searchProgress">
+<div class="progress-bar" id="searchBar" style="width:60%"></div>
+</div>
+<div class="results" id="resultsList">
+
+</div>
+</div></div><div class="panel"><div class="panel-kicker">02 / TRACE</div><h2 class="panel-title">Plot your journey</h2><div class="section">
+<div class="section-label">Waypoint Route Planner</div>
+<p class="builder-help">Enable point mode, then click the map to add stops. Roads are traced between stops automatically.</p>
+<div class="route-actions"><button class="btn btn-primary" id="pointModeBtn" type="button">＋ Add Waypoints</button><button class="btn btn-secondary" id="undoPointBtn" type="button">↶ Undo</button><button class="btn btn-secondary" id="clearPointsBtn" type="button">Clear</button></div>
+<div class="route-summary" id="waypointSummary">No waypoints · select Add Waypoints</div>
+<label class="builder-check" style=";display:none!important"><input checked="" id="chunkRoutingChk" type="checkbox"/> Route requests in small batches (reliable for long routes)</label>
+<label class="builder-check" style=""><input id="sceneryChk" type="checkbox"/> Include detailed OSM scenery (slower)</label>
+
+</div></div></div><div class="floating right-stack"><div class="panel" style="display:none!important"><div id="demBadge" style="display:flex; align-items:center; gap:8px;
+         padding:8px 10px; border-radius:6px; margin-bottom:12px;
+         font-family:var(--mono); font-size:11px; letter-spacing:0.04em;
+         background:rgba(120,130,150,0.12); color:var(--text2);
+         border:1px solid rgba(120,130,150,0.25);">
+<span id="demBadgeDot" style="width:8px; height:8px; border-radius:50%;
+            background:#8a93a6; flex:none;"></span>
+<span id="demBadgeText">ELEVATION: AUTOMATIC — online tiles</span>
+</div></div><div class="panel"><div class="panel-kicker">03 / PROJECT</div><h2 class="panel-title">Track identity</h2><div class="section">
+<div class="section-label">Track Name</div>
+<div class="field-label">Internal name (no spaces)</div>
+<input class="text-input" id="trackName" placeholder="my_road" type="text" value="my_road"/>
+</div></div><div class="panel"><div class="panel-kicker">04 / GEOMETRY</div><h2 class="panel-title">Road configuration</h2><div class="section">
+<div class="section-label">Parameters</div>
+<div id="lidarNote" style="display:none; padding:7px 9px; margin-bottom:10px;
+           border-radius:6px; font-size:11px; line-height:1.5;
+           background:rgba(232,184,75,0.08); border:1px solid rgba(232,184,75,0.35);
+           color:#e8b84b;"></div>
+<div class="param-row">
+<div class="param-head">
+<span class="field-label">Road Width</span>
+<span class="param-val" id="widthVal">8 m</span>
+</div>
+<input id="widthSlider" max="20" min="4" step="0.5" type="range" value="8"/>
+</div>
+<div class="param-row">
+<div class="param-head">
+<span class="field-label">GPS Smoothing</span>
+<span class="param-val" id="smoothVal">30%</span>
+</div>
+<input id="smoothSlider" max="100" min="0" step="5" type="range" value="30"/>
+</div>
+<div class="param-row" style=";display:none!important">
+<div class="param-head">
+<span class="field-label">Max Road Grade</span>
+<span class="param-val" id="gradeVal">AUTO</span>
+</div>
+<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2);margin-bottom:6px;">
+<input checked="" id="autoGradeChk" style="accent-color:#e8b84b;" type="checkbox"/>
+          Auto — detect the road's real grade from its trend
+        </label>
+<input disabled="" id="gradeSlider" max="35" min="5" step="1" type="range" value="35"/>
+<div style="font-size:11px; color:var(--text3);">
+          Sections steeper than the limit are treated as DEM errors and
+          bridged. Auto sets it from the road's own long-range trend, so
+          genuinely steep or dippy roads keep their character. Untick to set
+          manually — 35% ≈ match the DEM exactly.
+        </div>
+</div>
+<label style="display:flex;align-items:center;gap:8px;margin-top:4px;cursor:pointer;font-size:13px;color:var(--text2);;display:none!important">
+<input id="monoChk" style="accent-color:#e8b84b;" type="checkbox"/>
+        Steady climb — road never reverses direction (removes phantom dips)
+      </label>
+</div></div><div class="panel"><div class="panel-kicker">05 / DESTINATION</div><h2 class="panel-title">Install directory</h2><div class="section">
+<div class="section-label">1-Click Install <span style="font-weight:400; color:var(--text3);">(auto-detects Steam if blank)</span></div>
+<div class="field-label">Assetto Corsa folder — installs the track directly on export</div>
+<input class="text-input" id="acPath" placeholder="C:\Program Files (x86)\Steam\steamapps\common\assettocorsa" type="text" value=""/>
+</div></div><div class="panel" style="display:none!important"><div class="panel-kicker">06 / ANALYSIS</div><h2 class="panel-title">Route metrics</h2><div class="section" id="statsSection" style="display:none">
+<div class="section-label">Track Stats</div>
+<div class="stats-grid">
+<div class="stat-box">
+<div class="stat-val" id="statLength">—</div>
+<div class="stat-label">Length km</div>
+</div>
+<div class="stat-box">
+<div class="stat-val" id="statCorners">—</div>
+<div class="stat-label">Corners</div>
+</div>
+<div class="stat-box">
+<div class="stat-val" id="statClimb">—</div>
+<div class="stat-label">Climb m</div>
+</div>
+<div class="stat-box">
+<div class="stat-val" id="statRange">—</div>
+<div class="stat-label">Elev range m</div>
+</div>
+</div>
+<!-- Elevation profile chart -->
+<div id="elevChartWrap" style="display:none; margin-top:12px;">
+<div style="font-size:10px; color:var(--text3); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:6px;">
+          Elevation profile
+        </div>
+<canvas height="72" id="elevChart" style="width:100%; display:block; border-radius:4px;"></canvas>
+<div id="elevLegend" style="display:none; font-size:10px; font-family:var(--mono); color:var(--text3); margin-top:3px;">
+<span style="color:#e8b84b;">━ final road</span>  
+          <span style="color:rgba(232,85,85,0.9);">━ raw DEM</span>
+<span id="legendAlt" style="display:none; color:rgba(76,155,232,0.9);">  ━ Copernicus check</span>
+</div>
+<div id="elevUnc" style="display:none; font-size:10px; font-family:var(--mono); color:var(--text3); margin-top:2px;"></div>
+<div style="display:flex; justify-content:space-between; margin-top:3px;">
+<span id="elevMin" style="font-family:var(--mono); font-size:10px; color:var(--text3)">—</span>
+<span id="elevMax" style="font-family:var(--mono); font-size:10px; color:var(--text3)">—</span>
+</div>
+</div>
+</div></div></div></main><footer class="bottom-bar"><div><div class="bottom-title">Build a driveable world</div><div class="bottom-caption">Search to move the map, place waypoints, then export your route.</div></div><div class="bottom-controls"><div class="btn-row" style="display:flex;gap:10px;align-items:center">
+<button class="btn btn-primary" disabled="" id="confirmBtn">
+        ✓ Confirm Section
+      </button>
+<button class="btn btn-secondary" disabled="" id="previewBtn">
+        ▶ Preview Mesh Stats
+      </button>
+<button class="btn btn-primary" disabled="" id="exportBtn">
+        ⬇ Export Track
+      </button>
+</div></div><div id="downloadSection" style="display:none; padding:0 16px 16px;">
+<div class="stat-box" style="text-align:left; padding:12px;">
+<div style="font-size:11px; color:var(--text3); margin-bottom:6px; font-family:var(--mono);">EXPORT READY</div>
+<a href="#" id="downloadLink" style="color:var(--green); font-weight:700; font-size:14px; text-decoration:none;">
+          ⬇ Download .zip
+        </a>
+<div id="exportInfo" style="font-size:11px; color:var(--text3); margin-top:4px; font-family:var(--mono);"></div>
+</div>
+</div></footer><div id="exportProgressPanel" role="status" aria-live="polite" style="display:none;position:fixed;z-index:2100;bottom:88px;right:24px;width:min(390px,calc(100vw - 48px));background:#fff;border:1px solid #c9dddd;border-radius:14px;padding:16px 18px;box-shadow:0 12px 40px #092d3440;color:#153b3d">
+<div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><strong>Exporting your world</strong><span id="exportProgressPercent" style="font-weight:800">Preparing…</span></div>
+<div id="exportProgressStage" style="font-size:12px;margin:9px 0;color:#537175">Starting export…</div>
+<div style="height:10px;background:#e5eeee;border-radius:10px;overflow:hidden"><div id="exportProgressFill" style="width:8%;height:100%;background:#168d7a;border-radius:10px;transition:width .35s ease"></div></div>
+<div id="exportProgressDetail" style="font-size:11px;margin-top:8px;color:#6b8084">Keep ATLAS open until export finishes.</div>
+</div><div id="toast"></div><script>
+// ── State ──────────────────────────────────────────────────────────────────
+const state = {
+  selectedResult: null,
+  coords: [],         // trimmed [[lat, lon], ...] — used by preview/export
+  fullCoords: [],     // full loaded route
+  trim: { i0: 0, i1: 0 },
+  locked: false,      // start/end confirmed — gates preview/export
+  processing: false,
+  geomCache: {},      // "type/id" -> geometry response (never refetched)
+};
+
+// Lock-in flow: after a road loads, the user places start/end and must
+// confirm the section before the heavy preview/export steps unlock.
+function setLocked(locked) {
+  state.locked = locked;
+  const hasRoad = state.coords.length > 0;
+  document.getElementById('confirmBtn').disabled = !hasRoad || locked;
+  document.getElementById('confirmBtn').textContent =
+    locked ? '✓ Section Locked' : '✓ Confirm Section';
+  document.getElementById('previewBtn').disabled = !locked;
+  document.getElementById('exportBtn').disabled = !hasRoad || state.processing;
+}
+
+// ── Map ────────────────────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [48.8, 9.2],
+  zoom: 5,
+  zoomControl: true,
+});
+
+// Basemaps: no CARTO API key required. Imagery is a visual reference only;
+// OSM geometry used by the track exporter remains unchanged.
+const baseMaps = {
+  satellite: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    options: {attribution: 'Tiles © Esri and imagery providers', maxZoom: 19, maxNativeZoom: 18}
+  },
+  streets: {
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    options: {attribution: '© OpenStreetMap contributors', maxZoom: 19, maxNativeZoom: 19}
+  },
+  topo: {
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    options: {attribution: '© OpenStreetMap contributors, SRTM | © OpenTopoMap', subdomains: 'abc', maxZoom: 17, maxNativeZoom: 17}
+  }
+};
+let activeBaseLayer = null;
+let tileErrorCount = 0;
+let fallbackAttempted = false;
+function setMapStyle(style, autoFallback = false) {
+  if (!baseMaps[style]) return;
+  if (activeBaseLayer) map.removeLayer(activeBaseLayer);
+  tileErrorCount = 0;
+  const config = baseMaps[style];
+  activeBaseLayer = L.tileLayer(config.url, {...config.options, crossOrigin: true, keepBuffer: 4});
+  activeBaseLayer.on('tileload', () => {
+    tileErrorCount = 0;
+    document.getElementById('mapWarning').style.display = 'none';
+  });
+  activeBaseLayer.on('tileerror', () => {
+    if (++tileErrorCount >= 6) {
+      document.getElementById('mapWarning').style.display = 'block';
+      if (style === 'satellite' && !fallbackAttempted) {
+        fallbackAttempted = true;
+        setMapStyle('streets', true);
+      }
+    }
+  });
+  activeBaseLayer.addTo(map);
+  document.querySelectorAll('[data-mapstyle]').forEach(btn => {
+    const selected = btn.dataset.mapstyle === style;
+    btn.classList.toggle('active', selected);
+    btn.setAttribute('aria-pressed', String(selected));
+  });
+  if (!autoFallback) fallbackAttempted = false;
+}
+document.querySelectorAll('[data-mapstyle]').forEach(btn => btn.addEventListener('click', () => setMapStyle(btn.dataset.mapstyle)));
+setMapStyle('streets');
+
+// ── Elevation source mode (manual GeoTIFF vs automatic tiles) ──
+const demState = { mode: 'auto', dems: [], hires: false, rects: L.layerGroup().addTo(map) };
+
+function setDemBadge(mode, dems, coverage) {
+  const badge = document.getElementById('demBadge');
+  const dot = document.getElementById('demBadgeDot');
+  const txt = document.getElementById('demBadgeText');
+  if (mode === 'manual') {
+    const best = Math.min(...dems.map(d => d.res_m));
+    let s = `ELEVATION: MANUAL — ${dems.length} LiDAR file${dems.length > 1 ? 's' : ''} @ ${best} m`;
+    if (coverage !== undefined && coverage !== null) {
+      s += ` · ${Math.round(coverage * 100)}% of selected road covered`;
+    }
+    txt.textContent = s;
+    badge.style.background = 'rgba(232,184,75,0.10)';
+    badge.style.borderColor = 'rgba(232,184,75,0.45)';
+    badge.style.color = '#e8b84b';
+    dot.style.background = '#e8b84b';
+  } else {
+    txt.textContent = 'ELEVATION: AUTOMATIC — online tiles';
+    badge.style.background = 'rgba(120,130,150,0.12)';
+    badge.style.borderColor = 'rgba(120,130,150,0.25)';
+    badge.style.color = '';
+    dot.style.background = '#8a93a6';
+  }
+}
+
+async function refreshDemStatus() {
+  try {
+    const r = await fetch('/api/dem_status');
+    const d = await r.json();
+    demState.mode = d.mode;
+    demState.dems = d.dems || [];
+    demState.rects.clearLayers();
+    for (const dem of demState.dems) {
+      const b = dem.bounds;   // [minLat, minLon, maxLat, maxLon]
+      L.rectangle([[b[0], b[1]], [b[2], b[3]]], {
+        color: '#e8b84b', weight: 1.5, dashArray: '6 4',
+        fill: true, fillOpacity: 0.04, interactive: false,
+      }).addTo(demState.rects);
+    }
+    setDemBadge(demState.mode, demState.dems);
+    applyDemModeUI(demState.mode, null);
+  } catch (e) { /* server offline; badge stays at default */ }
+}
+refreshDemStatus();
+
+function handleDemResult(data) {
+  if (!data || !data.dem_mode) return;
+  applyDemModeUI(data.dem_mode, data.dem_coverage);
+  if (data.dem_mode === 'manual') {
+    setDemBadge('manual', demState.dems.length ? demState.dems
+                : [{res_m: '?'}], data.dem_coverage);
+    if (data.dem_coverage < 0.999) {
+      toast(`${Math.round((1 - data.dem_coverage) * 100)}% of the selected road is outside your uploaded map — that part used online tiles`, 'error', 6000);
+    }
+  } else {
+    setDemBadge('auto', []);
+  }
+}
+
+
+// Force Leaflet to recalculate its container size after DOM is ready
+setTimeout(() => map.invalidateSize(), 100);
+
+// Track all road layers so we can cleanly remove them on re-selection
+const roadLayers = [];
+
+map.on('mousemove', (e) => {
+  const b = document.getElementById('coordBadge');
+  const t = document.getElementById('coordText');
+  b.style.display = 'block';
+  t.textContent = `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+});
+
+// ── UI helpers ─────────────────────────────────────────────────────────────
+function toast(msg, type='info', duration=3200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.className = ''; }, duration);
+}
+
+function setLoading(on) {
+  document.getElementById('globalSpinner').classList.toggle('show', on);
+  document.getElementById('statusDot').style.background = on ? 'var(--accent)' : 'var(--green)';
+  document.getElementById('statusText').textContent = on ? 'working…' : 'ready';
+  state.processing = on;
+}
+
+function setProgress(el, show) {
+  document.getElementById(el).classList.toggle('show', show);
+}
+
+// ── Search ─────────────────────────────────────────────────────────────────
+// Searching only lists candidates. Nothing is downloaded until a result is
+// clicked, so picking the wrong road first costs nothing.
+async function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+
+  setLoading(true);
+  setProgress('searchProgress', true);
+  document.getElementById('resultsList').innerHTML = '<div class="empty-msg">Searching…</div>';
+
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+
+    setProgress('searchProgress', false);
+
+    if (data.error) { toast(data.error, 'error'); return; }
+
+    const results = data.results || [];
+    const list = document.getElementById('resultsList');
+
+    if (!results.length) {
+      list.innerHTML = '<div class="empty-msg">No places found — try another search</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    results.forEach((r, i) => {
+      const parts = r.display_name.split(', ');
+      const name = parts[0];
+      const sub = parts.slice(1, 4).join(', ');
+
+      const div = document.createElement('div');
+      div.className = 'result-item';
+      if (state.geomCache[`${r.osm_type}/${r.osm_id}`]) div.classList.add('cached');
+      div.innerHTML = `
+        <div class="result-name">${name}</div>
+        <div class="result-sub">${sub}</div>
+      `;
+      div.addEventListener('click', () => focusSearchResult(r, div));
+      list.appendChild(div);
+    });
+
+    const hint = document.createElement('div');
+    hint.className = 'empty-msg';
+    hint.textContent = `${results.length} places found — click to move the map`;
+    list.appendChild(hint);
+
+  } catch(e) {
+    toast('Search failed — is the server running?', 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function focusSearchResult(result, el) {
+  document.querySelectorAll('.result-item').forEach(node => node.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const lat = Number(result.lat), lon = Number(result.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+  // Search is navigation only: never fetch road geometry or change route/track name.
+  const bbox = (result.boundingbox || []).map(Number);
+  if (bbox.length === 4 && bbox.every(Number.isFinite) &&
+      bbox[1] > bbox[0] && bbox[3] > bbox[2]) {
+    const bounds = L.latLngBounds([[bbox[0],bbox[2]],[bbox[1],bbox[3]]]);
+    if (bounds.isValid() && bounds.getNorth()-bounds.getSouth() < 0.6 && bounds.getEast()-bounds.getWest() < 0.6)
+      map.fitBounds(bounds, {padding:[75,75],maxZoom:16});
+    else map.setView([lat,lon],15);
+  } else map.setView([lat,lon],15);
+  toast('Map moved — use Add Waypoints to plan your route', 'success', 3500);
+}
+
+async function selectResult(result, el) {
+  if (state.processing) return;
+
+  // Highlight UI
+  document.querySelectorAll('.result-item').forEach(e => e.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  state.selectedResult = result;
+
+  // Auto-fill track name from road name
+  const rawName = result.display_name.split(',')[0]
+    .replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_').toLowerCase().slice(0, 28);
+  // Do not overwrite a user-entered project name when selecting a road.
+
+  // Fly map to bounding box
+  if (result.boundingbox && result.boundingbox.length === 4) {
+    const [s, n, w, e] = result.boundingbox.map(Number);
+    map.fitBounds([[s, w], [n, e]], { padding: [40, 40] });
+  } else {
+    map.setView([result.lat, result.lon], 14);
+  }
+
+  // Already downloaded this road in this session? Reuse it — Overpass is
+  // slow and rate limited, and re-clicking a road shouldn't cost a query.
+  const key = `${result.osm_type}/${result.osm_id}`;
+  const cached = state.geomCache[key];
+  if (cached) {
+    applyGeometry(cached);
+    toast(`${cached.coords.length} GPS points (cached) — drag START/END, then Confirm`, 'success', 4500);
+    return;
+  }
+
+  // Fetch geometry
+  setLoading(true);
+  toast('Fetching road geometry…', 'info');
+
+  try {
+    const res = await fetch(`/api/geometry?type=${result.osm_type}&id=${result.osm_id}`);
+    const data = await res.json();
+
+    if (data.error || !data.coords || !data.coords.length) {
+      toast(`Geometry error: ${data.error || 'no data'}`, 'error', 6000);
+      return;
+    }
+
+    state.geomCache[key] = data;
+    if (el) el.classList.add('cached');
+    applyGeometry(data);
+    toast(`Loaded ${data.coords.length} GPS points — drag START/END, then Confirm`, 'success', 4500);
+
+  } catch(e) {
+    toast('Failed to fetch road geometry', 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// Apply a geometry response to the map + enter start/end selection mode
+function applyGeometry(data) {
+  state.coords = data.coords;
+  state.roadType = data.road_type || null;       // OSM highway= tag
+  state.roadSurface = data.road_surface || null; // OSM surface= tag
+  drawRoad(data.coords);
+
+  setLocked(false);
+
+  // Show how much of the road actually stitched together. A road is stored
+  // in OSM as many pieces; if only some chained, the track is truncated.
+  const used = data.segments_used, total = data.segments_total;
+  const badge = document.getElementById('segBadge');
+  if (used && total) {
+    document.getElementById('segText').textContent =
+      `${used}/${total} road segments joined`;
+    badge.style.display = 'block';
+    badge.classList.toggle('warn', used < total * 0.6);
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ── Draw road on map (with draggable start/end trim markers) ───────────────
+function nearestCoordIndex(latlng, coords) {
+  let best = 0, bestD = Infinity;
+  const cosLat = Math.cos(latlng.lat * Math.PI / 180);
+  for (let i = 0; i < coords.length; i++) {
+    const dLat = coords[i][0] - latlng.lat;
+    const dLon = (coords[i][1] - latlng.lng) * cosLat;
+    const d = dLat * dLat + dLon * dLon;
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return best;
+}
+
+function applyTrim() {
+  state.coords = state.fullCoords.slice(state.trim.i0, state.trim.i1 + 1);
+}
+
+function drawRoad(coords, isReload = true) {
+  if (isReload) {
+    state.fullCoords = coords;
+    state.trim = { i0: 0, i1: coords.length - 1 };
+    applyTrim();
+  }
+
+  // Remove ALL previously drawn road layers
+  roadLayers.forEach(l => map.removeLayer(l));
+  roadLayers.length = 0;
+
+  const full = state.fullCoords;
+  const t = state.trim;
+  const activeLL  = full.slice(t.i0, t.i1 + 1).map(c => [c[0], c[1]]);
+
+  // Full route, dim — shows what's been trimmed away
+  const ghost = L.polyline(full.map(c => [c[0], c[1]]),
+    { color: '#6b7280', weight: 2, opacity: 0.45, dashArray: '4 6' });
+  ghost.addTo(map);
+  roadLayers.push(ghost);
+
+  // Glow layer (wide, dim)
+  const glow = L.polyline(activeLL, { color: '#e8b84b', weight: 10, opacity: 0.12 });
+  glow.addTo(map);
+  roadLayers.push(glow);
+
+  // Main line
+  const line = L.polyline(activeLL, { color: '#e8b84b', weight: 3, opacity: 0.95 });
+  line.addTo(map);
+  roadLayers.push(line);
+
+  // Bridge / tunnel spans (3rd coord element flags them) — drawn distinctly so
+  // you can see where elevation is being levelled rather than sampled.
+  let runStart = -1;
+  for (let i = 0; i <= full.length; i++) {
+    const isStruct = i < full.length && full[i].length > 2 && full[i][2] > 0.5;
+    if (isStruct && runStart < 0) runStart = i;
+    if (!isStruct && runStart >= 0) {
+      if (i - runStart > 1) {
+        const seg = L.polyline(full.slice(runStart, i).map(c => [c[0], c[1]]),
+          { color: '#ff6b35', weight: 5, opacity: 0.85 });
+        seg.addTo(map);
+        roadLayers.push(seg);
+      }
+      runStart = -1;
+    }
+  }
+
+  // Draggable start/end markers — drag along the road to trim it
+  const makeIcon = (color, label) => L.divIcon({
+    html: `<div style="background:${color};color:#0a0b0d;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;padding:2px 7px;border-radius:3px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.6);cursor:grab;">${label} ⇕</div>`,
+    iconAnchor: [0, 0],
+    className: '',
+  });
+
+  const startMarker = L.marker(activeLL[0],
+    { icon: makeIcon('#4caf7d', 'START'), draggable: true });
+  const endMarker   = L.marker(activeLL[activeLL.length - 1],
+    { icon: makeIcon('#e85555', 'END'), draggable: true });
+
+  startMarker.on('dragend', () => {
+    const i = nearestCoordIndex(startMarker.getLatLng(), full);
+    state.trim.i0 = Math.max(0, Math.min(i, state.trim.i1 - 3));
+    applyTrim();
+    setLocked(false);
+    drawRoad(full, false);
+    toast(`Start moved — ${state.coords.length} points selected. Confirm to lock in.`, 'success', 2500);
+  });
+  endMarker.on('dragend', () => {
+    const i = nearestCoordIndex(endMarker.getLatLng(), full);
+    state.trim.i1 = Math.min(full.length - 1, Math.max(i, state.trim.i0 + 3));
+    applyTrim();
+    setLocked(false);
+    drawRoad(full, false);
+    toast(`End moved — ${state.coords.length} points selected. Confirm to lock in.`, 'success', 2500);
+  });
+
+  startMarker.addTo(map);
+  endMarker.addTo(map);
+  roadLayers.push(startMarker, endMarker);
+
+  if (isReload) map.fitBounds(line.getBounds(), { padding: [50, 50] });
+}
+
+// ── Elevation chart ────────────────────────────────────────────────────────
+function drawElevChart(profile, stats, raw, alt, unc, meta) {
+  if (!profile || profile.length < 2) return;
+
+  const wrap = document.getElementById('elevChartWrap');
+  const canvas = document.getElementById('elevChart');
+  wrap.style.display = '';
+
+  // Size canvas to its CSS width
+  canvas.width = canvas.offsetWidth || 270;
+  canvas.height = 72;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  // Shared y-scale across all curves so deviations show at true size
+  let all = profile;
+  if (raw && raw.length > 1) all = all.concat(raw);
+  if (alt && alt.length > 1) all = all.concat(alt);
+  const minE = Math.min(...all);
+  const maxE = Math.max(...all);
+  const range = maxE - minE || 1;
+  const pad = 4;
+
+  const toX = (i, len) => (i / (len - 1)) * (W - pad*2) + pad;
+  const toY = (v) => H - pad - ((v - minE) / range) * (H - pad*2);
+  const toXY = (arr, i) => [toX(i, arr.length), toY(arr[i])];
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Uncertainty band — how far the DEM could be wrong here. Wide where the
+  // road is cut into a hillside (a horizontal error becomes a vertical one),
+  // narrow on flat ground. Drawn first, behind everything.
+  if (unc && unc.length > 1) {
+    const at = (i) => unc[Math.round(i / (profile.length - 1) * (unc.length - 1))];
+    ctx.beginPath();
+    for (let i = 0; i < profile.length; i++) {
+      const x = toX(i, profile.length), y = toY(profile[i] + at(i));
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    for (let i = profile.length - 1; i >= 0; i--) {
+      ctx.lineTo(toX(i, profile.length), toY(profile[i] - at(i)));
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(160, 170, 200, 0.20)';
+    ctx.fill();
+  }
+
+  // Gradient fill (drawn FIRST so the raw line stays visible on top of it)
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(232,184,75,0.55)');
+  grad.addColorStop(1, 'rgba(232,184,75,0.03)');
+
+  ctx.beginPath();
+  for (let i = 0; i < profile.length; i++) {
+    const [x, y] = toXY(profile, i);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  // Close path for fill
+  ctx.lineTo(W - pad, H - pad);
+  ctx.lineTo(pad, H - pad);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Raw DEM samples — red line over the fill, under the gold line.
+  // If a phantom hill shows here, it's in the source data, not processing.
+  if (raw && raw.length > 1) {
+    ctx.beginPath();
+    for (let i = 0; i < raw.length; i++) {
+      const [x, y] = toXY(raw, i);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = 'rgba(232, 85, 85, 0.9)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  // Copernicus check — independent DEM. Where blue agrees with red, the
+  // feature is real terrain; where they split, it's a data artefact.
+  if (alt && alt.length > 1) {
+    ctx.beginPath();
+    for (let i = 0; i < alt.length; i++) {
+      const [x, y] = toXY(alt, i);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = 'rgba(76, 155, 232, 0.9)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  document.getElementById('elevLegend').style.display =
+    raw && raw.length > 1 ? '' : 'none';
+  document.getElementById('legendAlt').style.display =
+    alt && alt.length > 1 ? '' : 'none';
+
+  // Line on top
+  ctx.beginPath();
+  for (let i = 0; i < profile.length; i++) {
+    const [x, y] = toXY(profile, i);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = '#e8b84b';
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Min/max labels
+  const rawMin = stats.elev_min_m !== undefined ? stats.elev_min_m : minE;
+  document.getElementById('elevMin').textContent = Math.round(rawMin) + ' m';
+  document.getElementById('elevMax').textContent = Math.round(rawMin + range) + ' m';
+
+  const uncEl = document.getElementById('elevUnc');
+  if (meta && meta.uncert_med !== undefined && unc && unc.length > 1) {
+    uncEl.style.display = '';
+    uncEl.textContent =
+      `DEM confidence: ±${meta.uncert_med} m typical · ` +
+      `${Math.round((meta.sidehill_frac || 0) * 100)}% of route on steep sidehill`;
+  } else {
+    uncEl.style.display = 'none';
+  }
+}
+
+function updateStats(s, profile, raw, alt, unc, meta) {
+  document.getElementById('statLength').textContent = s.length_km;
+  document.getElementById('statCorners').textContent = s.corners;
+  document.getElementById('statClimb').textContent =
+    s.has_elevation ? Math.round(s.total_climb_m) : '—';
+  document.getElementById('statRange').textContent =
+    s.has_elevation ? Math.round(s.elev_range_m) : '—';
+  document.getElementById('statsSection').style.display = '';
+
+  if (s.has_elevation && profile && profile.length > 1) {
+    drawElevChart(profile, s, raw, alt, unc, meta);
+  }
+}
+
+// ── Preview ────────────────────────────────────────────────────────────────
+async function doPreview() {
+  if (!state.coords.length || state.processing) {
+    toast('Place at least two waypoints and wait for the road to finish tracing before exporting.', 'error', 5000);
+    return;
+  }
+  // Exporting a valid route also confirms it: no hidden prerequisite button.
+  if (!state.locked) setLocked(true);
+  setLoading(true);
+  toast('Fetching elevation + building mesh…', 'info', 12000);
+
+  try {
+    const res = await fetch('/api/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        coords: state.coords,
+        road_width: parseFloat(document.getElementById('widthSlider').value),
+        smooth: parseFloat(document.getElementById('smoothSlider').value) / 100,
+        max_grade: gradeValue(),
+        monotonic: document.getElementById('monoChk').checked,
+      }),
+    });
+    const data = await res.json();
+
+    if (data.error) { toast(data.error, 'error', 8000); return; }
+
+    const s = data.stats;
+    updateStats(s, data.elevation_profile, data.elevation_raw,
+                data.elevation_alt, data.elevation_unc, data);
+    handleDemResult(data);
+
+    const elevMsg = s.has_elevation
+      ? `↑ ${Math.round(s.total_climb_m)}m climb · ${Math.round(s.elev_range_m)}m range`
+      : 'no elevation';
+    toast(`${s.length_km} km · ${s.corners} corners · ${elevMsg}`, 'success', 5000);
+
+  } catch(e) {
+    toast('Preview failed', 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────
+async function doExport() {
+  if (!state.coords.length || !state.locked || state.processing) return;
+  setLoading(true);
+  const progressPanel = document.getElementById('exportProgressPanel');
+  const progressFill = document.getElementById('exportProgressFill');
+  const progressStage = document.getElementById('exportProgressStage');
+  const progressPercent = document.getElementById('exportProgressPercent');
+  const progressDetail = document.getElementById('exportProgressDetail');
+  progressPanel.style.display = 'block';
+  progressFill.style.width = '5%';
+  progressPercent.textContent = 'Working…';
+  progressStage.textContent = 'Starting export…';
+  progressDetail.textContent = 'Keep ATLAS open until export finishes.';
+  let exportFinished = false;
+  let polling = false;
+  const pollExportProgress = async () => {
+    if (polling || exportFinished) return;
+    polling = true;
+    try {
+      const response = await fetch('/api/progress', {cache:'no-store'});
+      if (!response.ok) return;
+      const p = await response.json();
+      const stage = p.stage || 'Generating track';
+      const total = Number(p.total) || 0;
+      const done = Math.min(total, Number(p.done) || 0);
+      const failed = Number(p.failed) || 0;
+      progressStage.textContent = stage;
+      if (total > 0) {
+        const percent = Math.min(95, Math.round(8 + (done/total)*82));
+        progressFill.style.width = percent + '%';
+        progressPercent.textContent = `${done} / ${total} chunks`;
+        progressDetail.textContent = failed ? `${failed} chunks failed; partial scenery may be used.` : `${Math.round(done/total*100)}% of current stage`;
+      } else {
+        progressFill.style.width = '12%';
+        progressPercent.textContent = 'Working…';
+        progressDetail.textContent = 'This stage has no measurable chunk count.';
+      }
+      document.getElementById('statusText').textContent = stage;
+    } catch (_) {} finally {polling = false;}
+  };
+  const progressTimer = setInterval(pollExportProgress, 850);
+  pollExportProgress();
+
+  const trackName = document.getElementById('trackName').value.trim()
+    .replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 32) || 'my_road';
+
+  toast('Export started — progress is shown at the bottom right', 'info', 4000);
+
+  try {
+    const res = await fetch('/api/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        coords: state.coords,
+        road_width: parseFloat(document.getElementById('widthSlider').value),
+        smooth: parseFloat(document.getElementById('smoothSlider').value) / 100,
+        max_grade: gradeValue(),
+        monotonic: document.getElementById('monoChk').checked,
+        track_name: trackName,
+        install_path: document.getElementById('acPath').value.trim() || null,
+        road_type: state.roadType || null,
+        road_surface: state.roadSurface || null,
+        include_env: document.getElementById('sceneryChk').checked,
+      }),
+    });
+    const data = await res.json();
+
+    if (!res.ok || data.error) { throw Error(data.error || 'Export request failed'); }
+
+    const s = data.stats;
+    updateStats(s, data.elevation_profile, data.elevation_raw,
+                null, data.elevation_unc, data);
+    handleDemResult(data);
+
+    progressFill.style.width = '100%';
+    progressPercent.textContent = '100%';
+    progressStage.textContent = 'Export complete';
+    progressDetail.textContent = 'Track package is ready.';
+    // Show download
+    const link = document.getElementById('downloadLink');
+    link.href = `/download/${data.filename}`;
+    link.textContent = `⬇ ${data.filename}`;
+    const elevInfo = s.has_elevation
+      ? ` · ↑${Math.round(s.total_climb_m)}m / ↓${Math.round(s.total_descent_m)}m`
+      : '';
+    const envInfo = (data.buildings || data.trees)
+      ? ` · ${data.buildings} bldgs / ${data.trees} trees`
+      : '';
+    document.getElementById('exportInfo').textContent =
+      `${data.size_kb} KB zip · ${data.kn5_kb} KB kn5 · package generated${elevInfo}${envInfo}`;
+    if (data.network) document.getElementById('exportInfo').textContent += ` · ${data.network.roads} nearby road sections / ${data.network.roundabouts} roundabouts`;
+    if (data.signs) document.getElementById('exportInfo').textContent += ` · ${data.signs.mapped} mapped signs / ${data.signs.inferred} inferred placements`;
+    if (data.warnings && data.warnings.length) {
+      document.getElementById('exportInfo').textContent += ` · WARNINGS: ${data.warnings.join(' | ')}`;
+      toast(data.warnings.join(' | '), 'error', 15000);
+    }
+    document.getElementById('downloadSection').style.display = '';
+
+    const elevMsg = s.has_elevation ? ` · ↑${Math.round(s.total_climb_m)}m` : '';
+    if (data.installed_to) {
+      toast(`Installed! ${s.length_km} km track; test it in AC${elevMsg}`, 'success', 8000);
+      document.getElementById('exportInfo').textContent += ` · INSTALLED → ${data.installed_to}`;
+    } else if (data.install_error) {
+      toast(`ZIP ready, but NOT installed: ${data.install_error}`, 'error', 12000);
+      document.getElementById('exportInfo').textContent += ` · NOT INSTALLED: ${data.install_error}`;
+    } else {
+      toast(`Export ready! ${s.length_km} km track${elevMsg}`, 'success', 5000);
+    }
+
+  } catch(e) {
+    progressStage.textContent = 'Export failed';
+    progressPercent.textContent = 'Error';
+    progressDetail.textContent = e.message || 'See the server console for details.';
+    toast('Export failed: ' + (e.message || 'unknown error'), 'error', 10000);
+  } finally {
+    exportFinished = true;
+    clearInterval(progressTimer);
+    setLoading(false);
+    document.getElementById('statusText').textContent = 'Ready';
+  }
+}
+
+// ── Sliders ────────────────────────────────────────────────────────────────
+document.getElementById('widthSlider').addEventListener('input', function() {
+  document.getElementById('widthVal').textContent = this.value + ' m';
+});
+document.getElementById('smoothSlider').addEventListener('input', function() {
+  document.getElementById('smoothVal').textContent = this.value + '%';
+});
+function updateGradeUI() {
+  const auto = document.getElementById('autoGradeChk').checked;
+  const slider = document.getElementById('gradeSlider');
+  slider.disabled = auto;
+  const val = document.getElementById('gradeVal');
+  if (!auto) {
+    val.textContent = slider.value + '%';
+  } else if (demState.hires) {
+    val.textContent = 'OFF · LiDAR';   // trusting the uploaded map
+  } else {
+    val.textContent = 'AUTO';
+  }
+}
+document.getElementById('gradeSlider').addEventListener('input', updateGradeUI);
+document.getElementById('autoGradeChk').addEventListener('change', updateGradeUI);
+
+// Reflect the elevation mode in the parameter controls, so it is obvious
+// when corrections/smoothing are inactive because LiDAR is trusted.
+function applyDemModeUI(mode, coverage) {
+  demState.hires = (mode === 'manual') && (coverage == null || coverage > 0.9);
+  const note = document.getElementById('lidarNote');
+  if (mode === 'manual') {
+    note.style.display = '';
+    if (coverage != null && coverage <= 0.9) {
+      note.textContent =
+        `Uploaded map covers only ${Math.round(coverage * 100)}% of this road — ` +
+        `standard corrections stay active for the uncovered part.`;
+    } else {
+      note.textContent =
+        'LiDAR mode: elevation follows your uploaded map — grade limiting is off ' +
+        'and profile smoothing is minimal (8 m). GPS Smoothing below still shapes ' +
+        'the road LINE from OSM geometry; it does not smooth elevation.';
+    }
+  } else {
+    note.style.display = 'none';
+  }
+  updateGradeUI();
+}
+function gradeValue() {
+  return document.getElementById('autoGradeChk').checked
+    ? 'auto'
+    : parseFloat(document.getElementById('gradeSlider').value);
+}
+
+// ── Search events ──────────────────────────────────────────────────────────
+document.getElementById('searchBtn').addEventListener('click', doSearch);
+document.getElementById('searchInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doSearch();
+});
+
+document.getElementById('confirmBtn').addEventListener('click', () => {
+  if (!state.coords.length) return;
+  setLocked(true);
+  toast(`Section locked — ${state.coords.length} points. Preview or export when ready.`, 'success', 3500);
+});
+
+document.getElementById('previewBtn').addEventListener('click', doPreview);
+document.getElementById('exportBtn').addEventListener('click', doExport);
+
+// Remember the Assetto Corsa install directory between launches.
+// localStorage is persistent across browser restarts for the same origin.
+(() => {
+  const pathField = document.getElementById('acPath');
+  const storageKey = 'roadforge.assettoCorsaInstallPath.v1';
+  if (!pathField) return;
+  try {
+    const previousPath = window.localStorage.getItem(storageKey);
+    if (previousPath !== null) pathField.value = previousPath;
+  } catch (error) {
+    console.warn('Install directory preference could not be restored:', error);
+  }
+  const saveInstallPath = () => {
+    try {
+      const value = pathField.value.trim();
+      if (value) window.localStorage.setItem(storageKey, value);
+      else window.localStorage.removeItem(storageKey);
+    } catch (error) {
+      console.warn('Install directory preference could not be saved:', error);
+    }
+  };
+  pathField.addEventListener('input', saveInstallPath);
+  pathField.addEventListener('change', saveInstallPath);
+})();
+
+// ATLAS waypoint planner — distinct from OSM named-road search.
+let waypointMode=false;
+const waypointStops=[];
+const waypointMarkers=[];
+let waypointRouteLayer=null;
+const waypointSummary=document.getElementById('waypointSummary');
+function updateWaypointUI(){
+  document.getElementById('pointModeBtn').classList.toggle('active',waypointMode);
+  document.getElementById('pointModeBtn').textContent=waypointMode?'✓ Placing Points':'＋ Add Waypoints';
+  waypointSummary.textContent=waypointStops.length+' waypoint'+(waypointStops.length===1?'':'s')+(waypointStops.length>1?' · route follows roads':' · click the map');
+  document.getElementById('undoPointBtn').disabled=!waypointStops.length;
+  document.getElementById('clearPointsBtn').disabled=!waypointStops.length;
+}
+function refreshWaypointMarkers(){
+  waypointMarkers.forEach(m=>map.removeLayer(m));waypointMarkers.length=0;
+  waypointStops.forEach((pt,i)=>{
+    const icon=L.divIcon({html:'<div class="waypoint-marker">'+(i+1)+'</div>',className:'',iconSize:[26,26],iconAnchor:[13,13]});
+    const marker=L.marker(pt,{icon,draggable:true}).addTo(map);
+    marker.bindTooltip('Stop '+(i+1)+' · drag to move', {direction:'top'});
+    marker.on('dragend',()=>{waypointStops[i]=[marker.getLatLng().lat,marker.getLatLng().lng];refreshWaypointMarkers();traceWaypoints()});
+    waypointMarkers.push(marker);
+  });updateWaypointUI();
+}
+let traceSequence=0;
+async function traceWaypoints(){
+  const seq=++traceSequence;
+  if(waypointRouteLayer){map.removeLayer(waypointRouteLayer);waypointRouteLayer=null;}
+  if(waypointStops.length<2){setLocked(false);return;}
+  setLocked(false);setLoading(true);
+  try{
+    const response=await fetch('/api/route_waypoints',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({waypoints:waypointStops,chunked:document.getElementById('chunkRoutingChk').checked})});
+    const data=await response.json();if(seq!==traceSequence)return;
+    if(!response.ok||data.error)throw Error(data.error||'Routing service unavailable');
+    if(!data.coords||data.coords.length<2)throw Error('No connected road found');
+    state.selectedResult=null;state.roadType=null;state.roadSurface=null;
+    applyGeometry({coords:data.coords});
+    waypointRouteLayer=null; // drawRoad owns the route layers
+    // Preserve the project name the user already entered.
+    toast('Road route traced across '+waypointStops.length+' stops · Confirm Section to export','success',5000);
+  }catch(err){if(seq===traceSequence)toast('Waypoint routing: '+err.message,'error',6500)}
+  finally{if(seq===traceSequence)setLoading(false)}
+}
+document.getElementById('pointModeBtn').addEventListener('click',()=>{waypointMode=!waypointMode;updateWaypointUI();toast(waypointMode?'Click the map to add stops':'Waypoint placement paused')});
+document.getElementById('undoPointBtn').addEventListener('click',()=>{waypointStops.pop();refreshWaypointMarkers();traceWaypoints()});
+document.getElementById('clearPointsBtn').addEventListener('click',()=>{waypointStops.length=0;refreshWaypointMarkers();++traceSequence;roadLayers.forEach(l=>map.removeLayer(l));roadLayers.length=0;state.coords=[];state.fullCoords=[];setLocked(false);toast('Route cleared')});
+map.on('click',e=>{if(!waypointMode||state.processing)return;waypointStops.push([e.latlng.lat,e.latlng.lng]);refreshWaypointMarkers();traceWaypoints()});
+updateWaypointUI();
+</script></body></html>
