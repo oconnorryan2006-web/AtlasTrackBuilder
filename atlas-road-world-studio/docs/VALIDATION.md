@@ -52,3 +52,7 @@ Greystone Road/Broad Road: 256.9 m selected route, 19 ordinary road sections, on
 ## Thin terrain triangle validation fix
 
 The screenshot error `Degenerate triangle: 1GRASS_NETWORK_0` was reproduced using valid float32-serialized positions whose float32 cross product cancels to zero. Validation now computes in float64 after rounding coordinates to KN5 float32 precision. A regression accepts the valid thin triangle and still rejects collapsed and inverted triangles. The exact route from the screenshot has not been supplied or reproduced; regenerate it in the new build to confirm that route.
+
+## Windows build-log evidence
+
+The supplied Windows log confirms all 28 tests passed under Python 3.14.6. Packaging stopped because relative add-data sources were resolved from the build/spec folder. build_windows.bat now passes absolute source paths. A generated PyInstaller spec was checked for existing absolute data sources, including a spec output directory with spaces. Full Windows packaging still needs a rerun.
