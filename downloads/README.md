@@ -13,3 +13,5 @@ SHA256SUMS.txt contains archive checksums.
 Updated terrain validation avoids false float32 cross-product cancellation on valid thin triangles; real collapsed/inverted triangles remain rejected. Extract the new source ZIP into a fresh folder rather than merging into an old builder folder.
 
 If the builder reports it cannot find build/src/server.py, download the corrected build_windows.bat here and replace the batch file in your project root, then rerun it. The source ZIP also includes the fix.
+
+The latest source ZIP includes the redesigned charcoal/lime studio UI and new ATLAS logo/icon. Download the entire source ZIP and rebuild to get both. ATLAS-interface-preview.png shows the UI with recorded route/API fixture responses and real Esri imagery; it is not an in-game screenshot. ATLAS-logo.png and ATLAS-icon.ico are also downloadable separately.

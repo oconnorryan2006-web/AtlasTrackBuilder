@@ -51,3 +51,7 @@ See [docs/VALIDATION.md](docs/VALIDATION.md) for automated checks, research refe
 | `output/` | Source-run caches and generated tracks |
 
 The source ZIP excludes build products, caches and old executables. Extract into a fresh folder instead of merging into the old messy folder; keep the old folder until the new app is verified. Packaged app caches and exports stay in `%LOCALAPPDATA%\ATLAS World Studio`.
+
+## Desktop interface and branding
+
+The studio uses a charcoal/lime theme, a tabbed route/settings sidebar, visible basemap controls, route metrics and export progress. The ATLAS road/compass logo is included as PNG and a seven-size Windows ICO in `src/static/brand`. The builder embeds the ICO into the EXE; Qt uses it for the window and taskbar. Rebuild the EXE to apply the redesign and icon. Leaflet 1.9.4 and its licence are bundled locally; map imagery and online services still need Internet access.

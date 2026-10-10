@@ -56,3 +56,7 @@ The screenshot error `Degenerate triangle: 1GRASS_NETWORK_0` was reproduced usin
 ## Windows build-log evidence
 
 The supplied Windows log confirms all 28 tests passed under Python 3.14.6. Packaging stopped because relative add-data sources were resolved from the build/spec folder. build_windows.bat now passes absolute source paths. A generated PyInstaller spec was checked for existing absolute data sources, including a spec output directory with spaces. Full Windows packaging still needs a rerun.
+
+## Desktop UI revamp checks
+
+28 generator tests pass after the UI changes. Real Chromium checks passed at 1480x900, 1100x700 and 900x600: sidebar switching, search, waypoint route, confirmation/export gating, preview metrics, export/download and progress dismissal. UI checks use recorded API fixtures; they do not generate or drive a real track. Satellite imagery was rendered from the configured Esri provider. OSM tiles were blocked from the cloud test host; Windows imagery availability must be checked separately. Both application scripts pass JavaScript syntax checks. Static assets return successfully and cannot escape the static directory. The seven-size ICO decodes and loads in Qt, and the generated PyInstaller spec references its absolute path. Windows EXE build/icon rendering remains to be verified on Windows.

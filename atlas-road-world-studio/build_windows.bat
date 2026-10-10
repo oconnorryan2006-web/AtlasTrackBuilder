@@ -8,6 +8,7 @@ set "PYTHONIOENCODING=utf-8"
 if not exist "src\launch.py" goto missing
 if not exist "src\server.py" goto missing
 if not exist "src\static\index.html" goto missing
+if not exist "src\static\brand\atlas.ico" goto missing
 if not exist "src\road_network_v3.py" goto missing
 if not exist "src\buildings.py" goto missing
 if not exist "src\road_signs.py" goto missing
@@ -56,7 +57,7 @@ echo Building ATLAS World Studio...
 set "STEP=PyInstaller build"
 tasklist /fi "IMAGENAME eq ATLAS World Studio.exe" /nh 2>nul | find /i "ATLAS World Studio.exe" >nul
 if not errorlevel 1 goto app_running
-"%PYEXE%" -m PyInstaller --noconfirm --clean --onefile --windowed --name "ATLAS World Studio" --distpath "%CD%\dist" --workpath "%CD%\build" --specpath "%CD%\build" --paths "%CD%\src" --add-data "%CD%\src\server.py;." --add-data "%CD%\src\static;static" --add-data "%CD%\src\road_network_v3.py;." --hidden-import road_network_v3 --hidden-import server --hidden-import mesh_validation --hidden-import buildings --hidden-import road_signs --collect-all shapely --collect-all PySide6.QtWebEngineCore --collect-all PySide6.QtWebEngineWidgets --collect-all PySide6.QtWebEngineQuick --collect-all PIL --hidden-import PIL.Image --hidden-import road_network_v3 --collect-data pyproj "%CD%\src\launch.py"
+"%PYEXE%" -m PyInstaller --noconfirm --clean --onefile --windowed --name "ATLAS World Studio" --icon "%CD%\src\static\brand\atlas.ico" --distpath "%CD%\dist" --workpath "%CD%\build" --specpath "%CD%\build" --paths "%CD%\src" --add-data "%CD%\src\server.py;." --add-data "%CD%\src\static;static" --add-data "%CD%\src\road_network_v3.py;." --hidden-import road_network_v3 --hidden-import server --hidden-import mesh_validation --hidden-import buildings --hidden-import road_signs --collect-all shapely --collect-all PySide6.QtWebEngineCore --collect-all PySide6.QtWebEngineWidgets --collect-all PySide6.QtWebEngineQuick --collect-all PIL --hidden-import PIL.Image --hidden-import road_network_v3 --collect-data pyproj "%CD%\src\launch.py"
 if errorlevel 1 goto fail
 if not exist "dist\ATLAS World Studio.exe" goto fail
 

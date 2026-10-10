@@ -4826,6 +4826,23 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
 
+        elif parsed.path.startswith("/static/"):
+            # Only serve packaged frontend assets inside the static directory.
+            from pathlib import Path
+            import mimetypes
+            from urllib.parse import unquote
+            static_root = Path(__file__).resolve().parent / "static"
+            asset = (static_root / unquote(parsed.path[len("/static/"):])).resolve()
+            if not asset.is_relative_to(static_root) or not asset.is_file():
+                self.send_json({"error": "Not found"}, 404)
+                return
+            body = asset.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", mimetypes.guess_type(str(asset))[0] or "application/octet-stream")
+            self.send_header("Content-Length", len(body))
+            self.end_headers()
+            self.wfile.write(body)
+
         elif parsed.path == "/api/search":
             q = qs.get("q", [""])[0]
             self.send_json(search_osm_roads(q) if q else {"error": "No query"})

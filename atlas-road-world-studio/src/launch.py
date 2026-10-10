@@ -39,12 +39,18 @@ def listening(port):
 
 def desktop():
     from PySide6.QtCore import QTimer, QUrl, Qt
+    from PySide6.QtGui import QIcon
     from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QLabel
     from PySide6.QtWebEngineWidgets import QWebEngineView
 
     app = QApplication(sys.argv)
     app.setApplicationName("ATLAS World Studio")
     app.setOrganizationName("ATLAS")
+    icon = QIcon(str(ROOT / "static" / "brand" / "atlas.ico"))
+    app.setWindowIcon(icon)
+    if os.name == "nt":
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ATLAS.WorldStudio")
     DATA.mkdir(parents=True, exist_ok=True)
     # The current backend listens on a fixed port. Never kill an unrelated process.
     port = 8743
@@ -70,10 +76,12 @@ def desktop():
         def __init__(self):
             super().__init__()
             self.setWindowTitle("ATLAS World Studio")
+            self.setWindowIcon(icon)
             self.resize(1480, 900)
             self.setMinimumSize(900, 600)
             self.view = QWebEngineView(self)
             self.setCentralWidget(self.view)
+            self.statusBar().setStyleSheet("QStatusBar { background: #15191b; color: #a7b0b0; border-top: 1px solid #333b3d; font-size: 11px; }")
             self.statusBar().showMessage("Starting ATLAS local engine…")
             self.elapsed = 0
             self.timer = QTimer(self)
@@ -107,6 +115,18 @@ def desktop():
 
     window = MainWindow()
     window.show()
+    if os.name == "nt":
+        # Windows 10/11 native title bar; older systems keep the default frame.
+        try:
+            dark = ctypes.c_int(1)
+            for attribute in (20, 19):
+                result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_void_p(int(window.winId())), attribute,
+                    ctypes.byref(dark), ctypes.sizeof(dark))
+                if result == 0:
+                    break
+        except (AttributeError, OSError):
+            pass
     return app.exec()
 
 
