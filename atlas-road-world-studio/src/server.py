@@ -721,8 +721,7 @@ def build_environment_meshes(surroundings: dict, mesh: dict,
     coordinate space. Returns [(name, kn5_verts, indices, material_key)].
     Barriers use physical WALL meshes; scenery remains visual only.
     """
-    if not surroundings:
-        return {"meshes": [], "n_buildings": 0, "n_trees": 0}
+    surroundings = surroundings or {}
     proj_p = mesh["proj"]
     proj = Transformer.from_crs(
         "EPSG:4326",
@@ -900,7 +899,7 @@ def build_environment_meshes(surroundings: dict, mesh: dict,
     # Barriers are physical WALL meshes, clipped clear of all carriageways.
     BARRIER_H = {"fence": 1.2, "wall": 1.8, "hedge": 1.5,
                  "guard_rail": 0.75, "retaining_wall": 2.0}
-    BARRIER_MAT = {"hedge": "tree", "guard_rail": "asphalt"}  # others: building
+    BARRIER_MAT = {"hedge": "hedge", "guard_rail": "asphalt"}  # others: building
 
     # Ground-to-top, two-sided physical barriers follow terrain and are
     # clipped against the complete road surface, including side roads.
@@ -913,9 +912,11 @@ def build_environment_meshes(surroundings: dict, mesh: dict,
                            mat))
             barr[mat] = [[], [], part_b + 1]
 
-    def _barrier_runs(pts_ll):
+    def _barrier_runs(br):
         from shapely.geometry import LineString
-        loc = [to_local(la, lo) for la, lo in pts_ll]
+        loc = br.get("local_pts")
+        if loc is None:
+            loc = [to_local(la, lo) for la, lo in br["pts"]]
         if len(loc) < 2:
             return
         line = LineString(loc)
@@ -936,17 +937,36 @@ def build_environment_meshes(surroundings: dict, mesh: dict,
             points.append(np.asarray(coords[-1]))
             points = np.asarray(points)
             distances = np.r_[0., np.cumsum(np.linalg.norm(np.diff(points, axis=0), axis=1))]
-            yield points[:,0], points[:,1], distances, None, None
+            for start in range(0, len(points)-1, 9999):
+                chunk = points[start:start+10000]
+                yield chunk[:,0], chunk[:,1], distances[start:start+10000], None, None
 
-    n_barr = 0
+    from roadside_hedges import hedge_layout
+    hedge_lines, entrance_area, hedge_height = hedge_layout(surroundings, mesh)
+    # Merge fallback roadside hedges with mapped scenery. Nearby mapped hedge
+    # snippets are replaced by the continuous boundary, avoiding duplicate walls.
+    from shapely.ops import unary_union
+    from shapely.geometry import LineString
+    hedge_coverage = unary_union(hedge_lines).buffer(.6)
+    barriers = []
     for br in surroundings.get("barriers", []):
+        if br.get("type") == "hedge" and len(br.get("pts", [])) >= 2:
+            line = LineString([to_local(*p) for p in br["pts"]])
+            from road_network_v3 import _lines
+            for part in _lines(line.difference(hedge_coverage.union(entrance_area))):
+                barriers.append({"type": "hedge", "local_pts": list(part.coords)})
+        else:
+            barriers.append(br)
+    barriers.extend({"type": "hedge", "local_pts": list(line.coords)} for line in hedge_lines)
+    n_barr = 0
+    for br in barriers:
         btype = br.get("type")
         bh = BARRIER_H.get(btype, 1.2)
         mat = BARRIER_MAT.get(btype, "building")
         rail = (btype == "guard_rail")
         if mat not in barr:
             barr[mat] = [[], [], 0]
-        for rx_, rz_, rt_, _p, _n in _barrier_runs(br["pts"]):
+        for rx_, rz_, rt_, _p, _n in _barrier_runs(br):
             verts_b, idx_b, _ = barr[mat]
             if len(verts_b) + 6 * len(rx_) > 60000:
                 flush_barrier(mat)
@@ -967,6 +987,8 @@ def build_environment_meshes(surroundings: dict, mesh: dict,
             for k in range(len(rx_)):
                 x_, z_ = float(rx_[k]), float(rz_[k])
                 gy = gys[k]
+                if btype == "hedge":
+                    hi = hedge_height(x_, z_)
                 u = float(rt_[k]) * 0.25
                 nx_, nz_ = float(px_[k]), float(pz_[k])
                 verts_b.append(((x_, gy + lo, z_), (nx_, 0, nz_), (u, 0), (1, 0, 0)))
@@ -4025,6 +4047,16 @@ def _chunk_strip(verts, uvs, centerline, base_name, max_pairs=30000):
         part += 1
 
 
+def build_hedge_texture(size=128):
+    """Dense opaque foliage; tree silhouette alpha creates false hedge gaps."""
+    from scipy.ndimage import gaussian_filter
+    rng = np.random.default_rng(193)
+    noise = gaussian_filter(rng.random((size,size)), .7, mode="wrap")
+    shade = np.clip((noise-.5)*110, -25, 25)
+    pixels = np.stack([43+shade*.65, 73+shade, 30+shade*.45], axis=-1)
+    return _png_encode(size, size, np.clip(pixels,0,255).astype(np.uint8).tobytes())
+
+
 def build_kn5(mesh: dict, track_name: str, env_meshes: list = None,
               terrain_meshes: list = None) -> bytes:
     """Build a complete, ready-to-drive KN5 — no Blender, no ksEditor.
@@ -4053,7 +4085,8 @@ def build_kn5(mesh: dict, track_name: str, env_meshes: list = None,
                 ("commercial.png", build_commercial_texture()),
                 ("treeshadow.png", build_treeshadow_texture()),
                 ("sideroad.png",   build_sideroad_texture()),
-                ("marking.png", _png_encode(4, 4, bytes([235,235,220]*16)))]
+                ("marking.png", _png_encode(4, 4, bytes([235,235,220]*16))),
+                ("hedge.png", build_hedge_texture())]
     textures.extend((key + ".png", data) for key, data in mesh.get("sign_textures", {}).items())
     k.i32(len(textures))
     for tex_name, data in textures:
@@ -4065,7 +4098,7 @@ def build_kn5(mesh: dict, track_name: str, env_meshes: list = None,
     mat_ids = {"road": 0, "grass": 1, "building": 2, "tree": 3, "terrain": 4,
                "forest": 5, "dirt": 6, "water": 7, "roof": 8, "asphalt": 9,
                "building2": 10, "tree2": 11, "building3": 12, "commercial": 13,
-               "treeshadow": 14, "sideroad": 15, "marking": 16}
+               "treeshadow": 14, "sideroad": 15, "marking": 16, "hedge": 17}
     for key in mesh.get("sign_textures", {}):
         mat_ids[key] = len(mat_ids)
     k.i32(len(mat_ids))
@@ -4094,6 +4127,7 @@ def build_kn5(mesh: dict, track_name: str, env_meshes: list = None,
     k.material("sideroad",  "ksPerPixel", "sideroad.png",   specular=0.05, spec_exp=18.0)
     k.material("marking", "ksPerPixel", "marking.png", specular=0.01, spec_exp=5.0)
 
+    k.material("hedge", "ksPerPixel", "hedge.png", specular=0.01, spec_exp=5.0)
     for key in mesh.get("sign_textures", {}):
         k.material(key, "ksPerPixel", key + ".png", specular=0.01, spec_exp=5.0)
 
@@ -4135,7 +4169,7 @@ def build_kn5(mesh: dict, track_name: str, env_meshes: list = None,
     # Do not duplicate the entire physical terrain with reversed winding.
     # The old UNDERLAY meshes doubled memory, KN5 size and export time.
 
-    # ── Environment (buildings + trees) — visual only, no physics ──
+    # ── Environment: physical barriers and visual buildings/trees ──
     for name, kv, idx, mat_key in (env_meshes or []):
         meshes.append((name, kv, idx, mat_ids[mat_key]))
 

@@ -31,7 +31,7 @@ class BarrierModelTests(unittest.TestCase):
         m['unified_network']=True
         files=server.build_track_files(m,'hedge_test',network+env)
         kn=Kn5Reader(files['hedge_test.kn5']).parse()
-        self.assertTrue(any(n.startswith('1WALL_BARR_TREE') for n in kn.nodes))
+        self.assertTrue(any(n.startswith('1WALL_BARR_HEDGE') for n in kn.nodes))
         self.assertIn('KEY=WALL',files['data/surfaces.ini'].decode())
 
     def test_generator_uses_new_plate_clearance_and_meshes(self):
