@@ -15,3 +15,5 @@ Updated terrain validation avoids false float32 cross-product cancellation on va
 If the builder reports it cannot find build/src/server.py, download the corrected build_windows.bat here and replace the batch file in your project root, then rerun it. The source ZIP also includes the fix.
 
 The latest source ZIP includes the redesigned charcoal/lime studio UI and new ATLAS logo/icon. Download the entire source ZIP and rebuild to get both. ATLAS-interface-preview.png shows the UI with recorded route/API fixture responses and real Esri imagery; it is not an in-game screenshot. ATLAS-logo.png and ATLAS-icon.ico are also downloadable separately.
+
+Hedge collision update: physical WALL barriers now avoid all generated roads; the KN5 generator and GLB exporter share the new sign models. 30 offline tests pass, including binary hedge export and sign geometry regression checks. Rebuild Windows and regenerate tracks; existing exports do not update automatically.

@@ -719,7 +719,7 @@ def build_environment_meshes(surroundings: dict, mesh: dict,
     """
     Convert OSM buildings/trees into KN5 mesh tuples in the track's local
     coordinate space. Returns [(name, kn5_verts, indices, material_key)].
-    Visual only — names carry no digit prefix so there is no physics.
+    Barriers use physical WALL meshes; scenery remains visual only.
     """
     if not surroundings:
         return {"meshes": [], "n_buildings": 0, "n_trees": 0}
@@ -897,78 +897,46 @@ def build_environment_meshes(surroundings: dict, mesh: dict,
 
     # ── Draped linear features: adjacent roads, waterways, barriers ──
     # (the arnis approach: render every linear feature the query returns.)
-    # All visual-only — no digit prefix → no physics, so none of these can
-    # reintroduce collision spikes.
+    # Barriers are physical WALL meshes, clipped clear of all carriageways.
     BARRIER_H = {"fence": 1.2, "wall": 1.8, "hedge": 1.5,
                  "guard_rail": 0.75, "retaining_wall": 2.0}
     BARRIER_MAT = {"hedge": "tree", "guard_rail": "asphalt"}  # others: building
 
-    def _clip_runs(pts_ll, clip_dist, step=4.0):
-        """Resample a lat/lon polyline every `step` m in local space and split
-        it into runs clear of the drivable road. Yields
-        (xs, zs, ts, prev_pt, next_pt) — prev/next are the first clipped
-        neighbour position when the run was truncated BY the road (i.e. at a
-        junction), else None."""
-        loc = np.array([to_local(la, lo) for la, lo in pts_ll])
-        if len(loc) < 2:
-            return
-        seg = np.sqrt(((loc[1:] - loc[:-1]) ** 2).sum(axis=1))
-        arc = np.concatenate([[0.0], np.cumsum(seg)])
-        if arc[-1] < 6.0:
-            return
-        t = np.arange(0.0, arc[-1] + step / 2, step)
-        sx = np.interp(t, arc, loc[:, 0])
-        sz = np.interp(t, arc, loc[:, 1])
-        d_cl, _ = kd_road.query(np.column_stack([sx, sz]))
-        keep = d_cl > clip_dist
-        i = 0
-        n = len(sx)
-        while i < n:
-            if not keep[i]:
-                i += 1
-                continue
-            j = i
-            while j < n and keep[j]:
-                j += 1
-            if j - i >= 2:
-                prev_pt = (float(sx[i-1]), float(sz[i-1])) if i > 0 else None
-                next_pt = (float(sx[j]),   float(sz[j]))   if j < n else None
-                yield (sx[i:j], sz[i:j], t[i:j], prev_pt, next_pt)
-            i = j
-
-    def _extend_to_road(x0, z0, xn, zn, target):
-        """Walk from a run endpoint toward its clipped neighbour until the
-        distance to the road centreline falls to `target` (just inside the
-        road edge), so the strip meets the carriageway with no gap."""
-        vx, vz = xn - x0, zn - z0
-        lo, hi = 0.0, 1.5                    # overshoot past the neighbour ok
-        for _ in range(12):
-            mid = (lo + hi) / 2.0
-            d, _i = kd_road.query([x0 + vx * mid, z0 + vz * mid])
-            if d > target:
-                lo = mid
-            else:
-                hi = mid
-        px2, pz2 = x0 + vx * hi, z0 + vz * hi
-        d, _i = kd_road.query([px2, pz2])
-        return (float(px2), float(pz2)) if d <= target + 0.6 else None
-
-    # — Barriers: vertical ribbons (fences, walls, hedges, guard rails)
-    #   following the terrain. Not extended into the road. The clip line sits
-    #   just INSIDE the road edge: guard rails are mapped hugging the
-    #   carriageway (often within centimetres of the edge), and the previous
-    #   edge+0.2m threshold silently deleted exactly the rails that matter
-    #   most — the ones on the corners. Only a barrier crossing the road
-    #   interior is removed now.
+    # Ground-to-top, two-sided physical barriers follow terrain and are
+    # clipped against the complete road surface, including side roads.
     barr = {}          # mat -> [verts, idx, part]
-    barrier_clip = max(0.5, hw - 0.5)
 
     def flush_barrier(mat):
         verts_b, idx_b, part_b = barr[mat]
         if verts_b:
-            meshes.append((f"ENV_BARR_{mat.upper()}_{part_b}", verts_b, idx_b,
+            meshes.append((f"1WALL_BARR_{mat.upper()}_{part_b}", verts_b, idx_b,
                            mat))
             barr[mat] = [[], [], part_b + 1]
+
+    def _barrier_runs(pts_ll):
+        from shapely.geometry import LineString
+        loc = [to_local(la, lo) for la, lo in pts_ll]
+        if len(loc) < 2:
+            return
+        line = LineString(loc)
+        surface = mesh.get("network_surface")
+        if surface is None:
+            surface = LineString([(p[0], p[2]) for p in cl]).buffer(hw)
+        clear = line.difference(surface.buffer(0.15))
+        runs = [clear] if clear.geom_type == "LineString" else getattr(clear, "geoms", [])
+        for run in runs:
+            if run.geom_type != "LineString" or run.length < 0.05:
+                continue
+            # Retain every original bend, then subdivide each segment.
+            points = []
+            coords = list(run.coords)
+            for a, b in zip(coords, coords[1:]):
+                count = max(1, int(np.ceil(np.linalg.norm(np.subtract(b, a)) / 3.0)))
+                points.extend(np.asarray(a) + (np.asarray(b)-a)*k/count for k in range(count))
+            points.append(np.asarray(coords[-1]))
+            points = np.asarray(points)
+            distances = np.r_[0., np.cumsum(np.linalg.norm(np.diff(points, axis=0), axis=1))]
+            yield points[:,0], points[:,1], distances, None, None
 
     n_barr = 0
     for br in surroundings.get("barriers", []):
@@ -978,7 +946,7 @@ def build_environment_meshes(surroundings: dict, mesh: dict,
         rail = (btype == "guard_rail")
         if mat not in barr:
             barr[mat] = [[], [], 0]
-        for rx_, rz_, rt_, _p, _n in _clip_runs(br["pts"], barrier_clip, step=3.0):
+        for rx_, rz_, rt_, _p, _n in _barrier_runs(br["pts"]):
             verts_b, idx_b, _ = barr[mat]
             if len(verts_b) + 6 * len(rx_) > 60000:
                 flush_barrier(mat)
@@ -3312,12 +3280,16 @@ def build_surfaces_ini() -> str:
     #
     # Redefining ROAD/GRASS here previously caused FMOD errors
     # (event:/surfaces/... not found) because of bad WAV= values.
-    # An empty track surfaces.ini means "use the system defaults".
+    # Only WALL is custom; road and grass retain the system defaults.
     return (
-        "; ATLAS Road World Studio — intentionally empty.\n"
+        "; ATLAS Road World Studio — default road/grass and custom barriers.\n"
         "; Mesh prefixes 1ROAD / 1GRASS use AC's built-in default surfaces\n"
         "; from system/data/surfaces.ini (correct grip + sounds).\n"
-        "; Add [SURFACE_N] sections here only for CUSTOM surface keys.\n"
+        "; Physical roadside barriers use the custom WALL key.\n"
+        "[SURFACE_0]\nKEY=WALL\nFRICTION=0.8\nDAMPING=0\n"
+        "WAV=\nWAV_PITCH=0\nFF_EFFECT=NULL\nDIRT_ADDITIVE=0\n"
+        "IS_VALID_TRACK=0\nBLACK_FLAG_TIME=0\nSIN_HEIGHT=0\nSIN_LENGTH=0\n"
+        "IS_PITLANE=0\nVIBRATION_GAIN=0\nVIBRATION_LENGTH=0\n"
     )
 
 

@@ -55,3 +55,7 @@ The source ZIP excludes build products, caches and old executables. Extract into
 ## Desktop interface and branding
 
 The studio uses a charcoal/lime theme, a tabbed route/settings sidebar, visible basemap controls, route metrics and export progress. The ATLAS road/compass logo is included as PNG and a seven-size Windows ICO in `src/static/brand`. The builder embeds the ICO into the EXE; Qt uses it for the window and taskbar. Rebuild the EXE to apply the redesign and icon. Leaflet 1.9.4 and its licence are bundled locally; map imagery and online services still need Internet access.
+
+## Hedge collisions and shared sign models
+
+Mapped hedges, walls, fences and guard rails export as physical `1WALL` barrier meshes with a custom WALL surface. Barriers are clipped against every generated carriageway, including junctions; short mapped segments are retained. UK signs in generated KN5 tracks and standalone GLB exports use the same `src/sign_models.py` geometry, with 2.1 m minimum plate clearance, 3 mm backs/edges and 76 mm posts. Rebuild the Windows app and regenerate tracks to apply these changes. Existing track KN5 files are unchanged. In-game collision and Windows packaging still require verification.

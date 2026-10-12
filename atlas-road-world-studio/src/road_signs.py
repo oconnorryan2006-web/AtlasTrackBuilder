@@ -126,46 +126,25 @@ def build_signs(surroundings,mesh):
         import hashlib
         material='sign_'+kind+('_'+hashlib.sha256(label.encode()).hexdigest()[:12] if label else '')
         textures[material]=sign_texture(kind,label)
-        vv=[];ii=[]
-        # Cylindrical metal post; 8 sides, double-sided face has no collision.
-        pole_v=[];pole_i=[]
-        for j in range(8):
-            a=2*math.pi*j/8
-            for yy in (y,y+2.1):pole_v.append(((float(x+.035*math.cos(a)),float(yy),float(z+.035*math.sin(a))),(math.cos(a),0.,math.sin(a)),(j/8,yy-y),(1.,0.,0.)))
-        for j in range(8):
-            a=2*j;b=2*((j+1)%8);pole_i.extend((a,b,a+1,b,b+1,a+1))
-        n=len(result);result.append((f'ENV_SIGN_POST_{n}',pole_v,pole_i,'asphalt'))
-        if kind=='give_way':shape=[(-.45,.38),(.45,.38),(0.,-.45)]
-        elif kind=='stop':shape=[(.42*math.cos(math.pi/8+j*math.pi/4),.42*math.sin(math.pi/8+j*math.pi/4)) for j in range(8)]
-        elif kind=='roundabout_warning':shape=[(-.45,-.38),(.45,-.38),(0.,.45)]
-        elif kind=='street_name':shape=[(-.75,-.22),(.75,-.22),(.75,.22),(-.75,.22)]
-        elif kind=='oneway':shape=[(-.3,-.4),(.3,-.4),(.3,.4),(-.3,.4)]
-        else:shape=[(.38*math.cos(j*2*math.pi/32),.38*math.sin(j*2*math.pi/32)) for j in range(32)]
-        uv_w=max(abs(u) for u,v in shape)*2;uv_h=max(abs(v) for u,v in shape)*2
-        for u,v in [(0.,0.)]+shape:
-            p=pos+across*u+normal*.04
-            vv.append(((float(p[0]),float(y+2.05+v),float(p[1])),(float(normal[0]),0.,float(normal[1])),(.5+u/uv_w,.5-v/uv_h),(float(across[0]),0.,float(across[1]))))
-        ccw=sum(shape[j][0]*shape[(j+1)%len(shape)][1]-shape[(j+1)%len(shape)][0]*shape[j][1] for j in range(len(shape)))>0
-        for j in range(len(shape)):
-            a,b=1+j,1+(j+1)%len(shape)
-            ii.extend((0,b,a) if ccw else (0,a,b))
-        result.append((f'ENV_SIGN_FACE_{kind}_{n}',vv,ii,material))
-        # Separate aluminium back and 3 mm plate edge, never mirrored artwork.
-        back=[];back_ix=[]
-        for u,v in [(0.,0.)]+shape:
-            p=pos+across*u+normal*.037
-            back.append(((float(p[0]),float(y+2.05+v),float(p[1])),(-float(normal[0]),0.,-float(normal[1])),(0.,0.),(float(across[0]),0.,float(across[1]))))
-        for j in range(len(shape)):
-            a,b=1+j,1+(j+1)%len(shape)
-            back_ix.extend((0,a,b) if ccw else (0,b,a))
-        for j in range(len(shape)):
-            k=(j+1)%len(shape);base=len(back)
-            for index in (j,k):
-                for depth in (.037,.04):
-                    u,v=shape[index];p=pos+across*u+normal*depth
-                    back.append(((float(p[0]),float(y+2.05+v),float(p[1])),(float(across[0]),0.,float(across[1])),(0.,0.),(float(across[0]),0.,float(across[1]))))
-            back_ix.extend((base,base+1,base+2,base+1,base+3,base+2))
-        result.append((f'ENV_SIGN_BACK_{kind}_{n}',back,back_ix,'building2'))
+        from sign_models import sign_geometry
+        vertices, normals, uvs, groups = sign_geometry(kind)
+        n=len(result)
+        # Transform the shared +Z-facing authoring model into track space.
+        # Across/+Y/front is a proper rotation, preserving triangle winding.
+        across=np.array([normal[1],-normal[0]])
+        for part, indices, mat in zip(('FACE','BACK','POST'), groups,
+                                      (material,'building2','asphalt')):
+            used=sorted(set(indices)); remap={old:new for new,old in enumerate(used)}
+            vv=[]
+            for j in used:
+                px,py,pz=vertices[j]; nx,ny,nz=normals[j]
+                point=pos+across*px+normal*pz
+                facing_normal=across*nx+normal*nz
+                vv.append(((float(point[0]),float(y+py),float(point[1])),
+                           (float(facing_normal[0]),ny,float(facing_normal[1])),
+                           uvs[j],(float(across[0]),0.,float(across[1]))))
+            result.append((f'ENV_SIGN_{part}_{kind}_{n}',vv,
+                           [remap[j] for j in indices],mat))
         dedup.append((np.array(point),kind,label));inferred+=guess;mapped+=not guess
     mesh['sign_textures']=textures
     return result,{'mapped':mapped,'inferred':inferred,'unsupported':len(surroundings.get('signs',[]))-sum(_kind(s.get('tags',{}))[0] is not None for s in surroundings.get('signs',[]))}
